@@ -286,6 +286,20 @@ export default function ReportPage() {
             ))}
           </div>
         </div>
+        {/* BARRE ACTION FIXE BASSE */}
+        <div className="bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 z-40">
+          <div className="max-w-md mx-auto">
+            <button 
+              type="submit"
+              onClick={handleSubmit}
+              disabled={loading || !title || !coords} 
+              className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 text-white font-black py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-md transition active:scale-99 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {loading ? "Indexation sécurisée..." : "Envoyer le rapport"}
+            </button>
+          </div>
+        </div>
 
         {/* LISTE DES ALERTES RÉCENTES */}
         <div className="space-y-2 pt-2">
@@ -317,20 +331,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* BARRE ACTION FIXE BASSE */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 z-40">
-          <div className="max-w-md mx-auto">
-            <button 
-              type="submit"
-              onClick={handleSubmit}
-              disabled={loading || !title || !coords} 
-              className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 text-white font-black py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-md transition active:scale-99 flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {loading ? "Indexation sécurisée..." : "Envoyer le rapport"}
-            </button>
-          </div>
-        </div>
+        
 
       </main>
     </div>
