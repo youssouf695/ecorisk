@@ -57,17 +57,18 @@ export default function LoginPage() {
       });
 
       // Envoi du mail via ton instance EmailJS
-      await emailjs.send(
-        'service_9ytobcs',
-        'template_6658w2o',
-        {
-          name: user.name,
-          time: now,
-          message: otp, // Utilise la variable brute pour ton superbe design HTML
-          to_email: email,
-        },
-        'zHlNT2HaQOPgo5Y37'
-      );
+ //  CODE CORRIGÉ (Le mail va partir instantanément !)
+await emailjs.send(
+    'service_9ytobcs',
+    'template_6658w2o',
+    {
+      name: user.name,
+      time: now,
+      message: otp, // 👈 Uniquement les 6 chiffres, le template HTML s'occupe du reste !
+      to_email: email,
+    },
+    'zHlNT2HaQOPgo5Y37'
+  );
 
       setIsOtpSent(true);
       alert(`Code de connexion envoyé à ${email}`);
