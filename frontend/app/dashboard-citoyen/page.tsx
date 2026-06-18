@@ -9,7 +9,6 @@ import {
   MapPin, 
   Clock, 
   CheckCircle, 
-  AlertCircle,
   Filter
 } from 'lucide-react';
 
@@ -18,8 +17,6 @@ export default function MesAlertesPage() {
   const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all'); // all, pending, resolved
-
-  const mockUserId = "11111111-1111-1111-1111-111111111111";
 
   // Même dictionnaire d'icônes que la page report pour la cohérence visuelle
   const categoriesConfig: { [key: string]: { label: string; icon: any } } = {
@@ -39,10 +36,19 @@ export default function MesAlertesPage() {
 
   const fetchMyReports = async () => {
     setLoading(true);
+
+    // 🔑 Récupération de l'ID utilisateur local
+    const currentUserId = localStorage.getItem('ecoreport_user_id');
+
+    if (!currentUserId) {
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('reports')
       .select('*')
-      .eq('user_id', mockUserId)
+      .eq('user_id', currentUserId) // 👈 Filtrage sécurisé par l'utilisateur connecté
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -55,7 +61,6 @@ export default function MesAlertesPage() {
     if (filterStatus === 'all') {
       setFilteredReports(reports);
     } else if (filterStatus === 'resolved') {
-      // Si tu as un champ 'status' ou 'resolved' dans ta table, ajuste ici
       setFilteredReports(reports.filter(r => r.status === 'resolved' || r.is_resolved === true));
     } else {
       setFilteredReports(reports.filter(r => r.status !== 'resolved' && !r.is_resolved));
@@ -73,6 +78,7 @@ export default function MesAlertesPage() {
       {/* FILTRES DE STATUT DE SÉLECTION RAPIDE */}
       <div className="flex gap-1 bg-slate-200/60 p-1 rounded-xl">
         <button
+          type="button"
           onClick={() => setFilterStatus('all')}
           className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition ${
             filterStatus === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
@@ -81,6 +87,7 @@ export default function MesAlertesPage() {
           Tous ({reports.length})
         </button>
         <button
+          type="button"
           onClick={() => setFilterStatus('pending')}
           className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition ${
             filterStatus === 'pending' ? 'bg-white text-amber-600 shadow-xs' : 'text-slate-500'
@@ -89,6 +96,7 @@ export default function MesAlertesPage() {
           En cours
         </button>
         <button
+          type="button"
           onClick={() => setFilterStatus('resolved')}
           className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition ${
             filterStatus === 'resolved' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500'
@@ -119,7 +127,6 @@ export default function MesAlertesPage() {
             const config = categoriesConfig[report.category] || { label: 'Autre', icon: MapPin };
             const IconComponent = config.icon;
             
-            // Simulation d'un traitement pour le hackathon si pas encore de colonne statut explicite
             const isDone = report.status === 'resolved' || report.is_resolved;
 
             return (

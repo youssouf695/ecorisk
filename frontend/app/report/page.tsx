@@ -1,8 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-// import Header from '../../components/Header';
-// Importation des icônes vectorielles professionnelles
 import { 
   Trash2, 
   Construction, 
@@ -35,8 +33,6 @@ export default function ReportPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const mockUserId = "11111111-1111-1111-1111-111111111111";
-
   // Configuration thématique des catégories avec composants d'icônes
   const categoriesConfig = [
     { id: 'déchets', label: 'Ordures', icon: Trash2 },
@@ -52,16 +48,25 @@ export default function ReportPage() {
   }, []);
 
   const fetchUserPoints = async () => {
-    const { data } = await supabase.from('users').select('points').eq('id', mockUserId).single();
+    // 🔑 Récupération de l'ID utilisateur local
+    const currentUserId = localStorage.getItem('ecoreport_user_id');
+    if (!currentUserId) return;
+
+    const { data } = await supabase.from('users').select('points').eq('id', currentUserId).single();
     if (data) setUserPoints(data.points);
   };
 
   const fetchMyRecentReports = async () => {
+    // 🔑 On récupère l'identifiant unique du citoyen stocké dans le téléphone
+    const currentUserId = localStorage.getItem('ecoreport_user_id');
+    if (!currentUserId) return; 
+
     const { data } = await supabase.from('reports')
       .select('*')
-      .eq('user_id', mockUserId)
+      .eq('user_id', currentUserId) 
       .order('created_at', { ascending: false })
       .limit(3);
+      
     if (data) setReports(data);
   };
 
@@ -116,7 +121,7 @@ export default function ReportPage() {
           setGeoStatus('Position verrouillée');
         },
         () => {
-          setCoords({ lat: 7.3230, lng: 13.5650 }); // Repli Ngaoundéré automatique
+          setCoords({ lat: 7.3230, lng: 13.5650 }); // Repli Ngaoundéré automatique si refusé
           setGeoStatus('GPS Localisé');
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -129,10 +134,19 @@ export default function ReportPage() {
     e.preventDefault();
     if (!title || !coords) return;
     setLoading(true);
-
+  
+    // 🔑 On utilise directement la session locale du localStorage pour le Hackathon
+    const currentUserId = localStorage.getItem('ecoreport_user_id');
+  
+    if (!currentUserId) {
+      alert("Profil introuvable. Veuillez d'abord vous enregistrer.");
+      setLoading(false);
+      return;
+    }
+  
     const { error } = await supabase.from('reports').insert([
       {
-        user_id: mockUserId,
+        user_id: currentUserId,
         title,
         category,
         severity,
@@ -142,7 +156,7 @@ export default function ReportPage() {
         image_data: capturedImage
       }
     ]).select();
-
+  
     setLoading(false);
 
     if (!error) {
@@ -152,13 +166,14 @@ export default function ReportPage() {
       setGeoStatus('Position non détectée');
       fetchUserPoints();
       fetchMyRecentReports();
+    } else {
+      console.error(error);
+      alert("Erreur lors de l'envoi du rapport.");
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans antialiased pb-24">
-      {/* <Header points={userPoints} /> */}
-
       <main className="flex-1 p-4 max-w-md w-full mx-auto space-y-5">
         
         {/* TITRE APPLICATIF */}
@@ -167,7 +182,7 @@ export default function ReportPage() {
           <p className="text-xs text-slate-400">Renseignez l'anomalie sur le terrain</p>
         </div>
 
-        {/* APPAREIL PHOTO AVEC ICÔNE VECTORIELLE */}
+        {/* APPAREIL PHOTO */}
         <div className="relative rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-slate-900 aspect-video flex flex-col justify-center items-center">
           {isCameraOpen ? (
             <div className="absolute inset-0 w-full h-full">
@@ -222,7 +237,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* GRILLE DE CATÉGORIES AVEC ICÔNES VECTORIELLES */}
+        {/* GRILLE DE CATÉGORIES */}
         <div className="space-y-2">
           <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">Nature de l'encombrement</label>
           <div className="grid grid-cols-4 gap-2">
@@ -247,7 +262,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* SÉLECTEUR DE PRIORITÉ AVEC ICÔNE */}
+        {/* SÉLECTEUR DE PRIORITÉ */}
         <div className="bg-white rounded-2xl p-3 border border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-slate-400 pl-1">
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -306,7 +321,7 @@ export default function ReportPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 z-40">
           <div className="max-w-md mx-auto">
             <button 
-              type="button"
+              type="submit"
               onClick={handleSubmit}
               disabled={loading || !title || !coords} 
               className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 text-white font-black py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-md transition active:scale-99 flex items-center justify-center gap-2"

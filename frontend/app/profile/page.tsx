@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../supabaseClient';
 import { 
   User, 
@@ -16,8 +17,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({ total: 0, resolved: 0 });
   const [loading, setLoading] = useState(true);
-
-  const mockUserId = "11111111-1111-1111-1111-111111111111";
+  const router = useRouter();
 
   useEffect(() => {
     fetchProfileAndStats();
@@ -26,18 +26,26 @@ export default function ProfilePage() {
   const fetchProfileAndStats = async () => {
     setLoading(true);
     
-    // 1. Récupérer les infos de l'utilisateur (points, nom)
+    // 🔑 Récupération de l'ID de session locale
+    const currentUserId = localStorage.getItem('ecoreport_user_id');
+
+    if (!currentUserId) {
+      router.push('/login');
+      return;
+    }
+    
+    // 1. Récupérer les infos en temps réel de l'utilisateur (points, nom, quartier)
     const { data: userData } = await supabase
       .from('users')
       .select('*')
-      .eq('id', mockUserId)
+      .eq('id', currentUserId)
       .single();
 
-    // 2. Récupérer les statistiques de ses signalements
+    // 2. Récupérer les statistiques de ses signalements uniques
     const { data: reportsData } = await supabase
       .from('reports')
       .select('status, is_resolved')
-      .eq('user_id', mockUserId);
+      .eq('user_id', currentUserId);
 
     if (userData) {
       setProfile(userData);
@@ -50,6 +58,12 @@ export default function ProfilePage() {
     }
 
     setLoading(false);
+  };
+
+  // 🔑 Fonction pour vider la session locale et déconnecter proprement
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
   };
 
   if (loading) {
@@ -90,7 +104,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-1 text-slate-400 text-xs font-medium">
             <MapPin className="w-3 h-3" />
-            <span>Ngaoundéré, Cameroun</span>
+            <span>{profile?.quartier || 'Ngaoundéré'}, Cameroun</span>
           </div>
         </div>
       </div>
@@ -151,7 +165,7 @@ export default function ProfilePage() {
         </div>
         
         <div className="divide-y divide-slate-100">
-          <button className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-50/50 transition">
+          <button type="button" className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-50/50 transition">
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
                 <TrendingUp className="w-4 h-4" />
@@ -161,7 +175,12 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-slate-300" />
           </button>
 
-          <button className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-50/50 transition">
+          {/* 🔑 Bouton branché avec handleLogout */}
+          <button 
+            type="button" 
+            onClick={handleLogout}
+            className="w-full p-3.5 flex items-center justify-between text-left hover:bg-red-50/30 transition"
+          >
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
                 <LogOut className="w-4 h-4" />

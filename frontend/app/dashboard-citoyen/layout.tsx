@@ -3,54 +3,68 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '../supabaseClient';
 import Header from '../components/Header';
-// Utilisation des icônes Lucide clean
 import { MapPin, PlusCircle, User } from 'lucide-react';
 
-export default function CitoyenLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CitoyenLayout({ children }: { children: React.ReactNode }) {
   const [userPoints, setUserPoints] = useState(0);
+  const [loadingSession, setLoadingSession] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
-  const mockUserId = "11111111-1111-1111-1111-111111111111";
 
   useEffect(() => {
-    fetchUserPoints();
+    checkUserSession();
   }, [pathname]);
 
-  const fetchUserPoints = async () => {
-    const { data } = await supabase.from('users').select('points').eq('id', mockUserId).single();
+  const checkUserSession = async () => {
+    // 1. Récupérer la session active de Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      // 2. Si connecté, récupérer ses points réels
+      fetchUserPoints(session.user.id);
+    } else {
+      // --- ASTUCE HACKATHON : Connexion automatique si aucune session ---
+      // Cela évite l'écran de login fastidieux devant le jury
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: 'citoyen@ecoreport.com', // Crée ce compte rapidement dans ton auth Supabase
+        password: 'password123',
+      });
+      
+      if (signInData?.user) {
+        fetchUserPoints(signInData.user.id);
+      }
+    }
+    setLoadingSession(false);
+  };
+
+  const fetchUserPoints = async (userId: string) => {
+    const { data } = await supabase.from('users').select('points').eq('id', userId).single();
     if (data) setUserPoints(data.points);
   };
 
-  // Liens de navigation pour la barre basse
   const navItems = [
     { label: 'Mes alertes', path: '/dashboard-citoyen', icon: MapPin },
     { label: 'Signaler', path: '/report', icon: PlusCircle },
     { label: 'Profil', path: '/profile', icon: User },
   ];
 
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs font-medium text-slate-400">
+        Chargement de la session...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center">
-      {/* Frame aspect Mobile unique */}
       <div className="w-full max-w-md min-h-screen flex flex-col bg-slate-50 shadow-2xl relative border-x border-slate-200/50 pb-20">
-        
-        {/* Header commun injecté en haut */}
         <Header points={userPoints} />
-
-        {/* Contenu propre à la page (report ou profile) */}
-        <div className="flex-1">
-          {children}
-        </div>
-
-        {/* 📱 MENU MOBILE FIXE EN BAS DE L'ÉCRAN */}
+        <div className="flex-1">{children}</div>
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 h-16 flex items-center justify-around px-4 z-50 rounded-t-xl shadow-lg">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
-
             return (
               <button
                 key={item.path}
@@ -66,7 +80,6 @@ export default function CitoyenLayout({
             );
           })}
         </nav>
-
       </div>
     </div>
   );
