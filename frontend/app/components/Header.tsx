@@ -27,11 +27,11 @@ export default function Header({ points }: HeaderProps) {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="font-bold text-lg tracking-tight text-slate-900">
-              EcoReport<span className="text-emerald-600">.ai</span>
+              EcoReport
             </span>
-            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold tracking-wider uppercase">
+            {/* <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold tracking-wider uppercase">
               v1.0
-            </span>
+            </span> */}
           </Link>
 
           {/* LIENS DE NAVIGATION PRINCIPAUX */}

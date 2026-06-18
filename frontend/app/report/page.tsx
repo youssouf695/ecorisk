@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import Header from '../components/Header';
+// import Header from '../../components/Header';
 // Importation des icônes vectorielles professionnelles
 import { 
   Trash2, 
@@ -157,7 +157,7 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans antialiased pb-24">
-      <Header points={userPoints} />
+      {/* <Header points={userPoints} /> */}
 
       <main className="flex-1 p-4 max-w-md w-full mx-auto space-y-5">
         
